@@ -2,11 +2,11 @@ import configuration
 from hf.infer import Wav2vecHF
 
 class Transcribe:
-    def __init__(self):
-        self.model_type = configuration.MODEL
-        self.vad = configuration.USE_VAD
-        self.wav_path = configuration.WAV_PATH
-        self.lm = configuration.USE_LM
+    def __init__(self, model_type, vad, wav_path, lm):
+        self.model_type = model_type
+        self.vad = vad
+        self.wav_path = wav_path
+        self.lm = lm
         if self.model_type == 'hf':
             self.model = self.hf_model(configuration.HF_MODEL_PATH)
             
@@ -18,9 +18,9 @@ class Transcribe:
 
         return asr_model
 
-    def speech_to_text(self, audio_path, hot_words=[]):
+    def speech_to_text(self, hot_words=[]):
         if self.model_type == 'hf':
-            return self.model.transcribe(audio_path, hotwords=hot_words)
+            return self.model.transcribe(self.wav_path, hotwords=hot_words)
         
 if __name__ == '__main__':
-    print(Transcribe().speech_to_text(configuration.WAV_PATH))
+    print(Transcribe(configuration.MODEL, configuration.USE_VAD, configuration.WAV_PATH, configuration.USE_LM).speech_to_text())
