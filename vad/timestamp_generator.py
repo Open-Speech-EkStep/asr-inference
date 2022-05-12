@@ -4,6 +4,7 @@ import webrtcvad
 
 class Frame(object):
     """Represents a "frame" of audio data."""
+
     def __init__(self, bytes, timestamp, duration):
         self.bytes = bytes
         self.timestamp = timestamp
@@ -23,13 +24,20 @@ def frame_generator(frame_duration_ms, audio, sample_rate):
     timestamp = 0.0
     duration = (float(n) / sample_rate) / 2.0
     while offset + n < len(audio):
-        yield Frame(audio[offset:offset + n], timestamp, duration)
+        yield Frame(audio[offset : offset + n], timestamp, duration)
         timestamp += duration
         offset += n
 
 
-def vad_collector(sample_rate, frame_duration_ms,
-                  padding_duration_ms, vad, frames, start_time, end_time):
+def vad_collector(
+    sample_rate,
+    frame_duration_ms,
+    padding_duration_ms,
+    vad,
+    frames,
+    start_time,
+    end_time,
+):
     """Filters out non-voiced audio frames.
 
     Given a webrtcvad.Vad and a source of audio frames, yields only
@@ -93,23 +101,23 @@ def vad_collector(sample_rate, frame_duration_ms,
             if num_unvoiced > 0.9 * ring_buffer.maxlen:
                 end_time.append(frame.timestamp + frame.duration)
                 triggered = False
-                yield b''.join([f.bytes for f in voiced_frames])
+                yield b"".join([f.bytes for f in voiced_frames])
                 ring_buffer.clear()
                 voiced_frames = []
     if triggered:
         end_time.append(frame.timestamp + frame.duration)
-        #sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
-    #sys.stdout.write('\n')
+        # sys.stdout.write('-(%s)' % (frame.timestamp + frame.duration))
+    # sys.stdout.write('\n')
     # If we have any leftover voiced audio when we run out of input,
     # yield it.
     if voiced_frames:
-        yield b''.join([f.bytes for f in voiced_frames])
+        yield b"".join([f.bytes for f in voiced_frames])
 
 
 def extract_time_stamps(wav_file):
     start_time = []
     end_time = []
-    #audio, sample_rate = read_wave(wav_file)
+    # audio, sample_rate = read_wave(wav_file)
     vad = webrtcvad.Vad(3)
     frames = frame_generator(30, wav_file, 16000)
     frames = list(frames)
