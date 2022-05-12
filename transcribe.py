@@ -4,6 +4,11 @@ from utils import wav_to_pcm16
 import soundfile as sf
 import vad.timestamp_generator as tg
 from tqdm import tqdm
+from rich.console import Console
+from rich.traceback import install
+
+install()
+console = Console()
 
 
 class Transcribe:
@@ -12,7 +17,12 @@ class Transcribe:
         self.vad = vad
         self.wav_path = wav_path
         self.lm = lm
+        console.log(f"Transcribing audio file {self.wav_path}")
+        console.log(f"Using model type [green underline]{self.model_type}[/]")
+        console.log(f"Use vad is set to {self.vad}")
+        console.log(f"Use LM is set to {self.lm}")
         if self.model_type == "hf":
+            console.log(f"Model loaded from {configuration.HF_MODEL_PATH}")
             self.model = self.hf_model(configuration.HF_MODEL_PATH)
 
     def hf_model(self, model_path):
@@ -43,15 +53,16 @@ class Transcribe:
 
                 text = self.model.transcribe(self.wav_path, hotwords=hot_words)
 
+        console.log(f"Transcription: {text}", style="bold")
+
         return text
 
 
 if __name__ == "__main__":
-    print(
-        Transcribe(
-            configuration.MODEL,
-            configuration.USE_VAD,
-            configuration.WAV_PATH,
-            configuration.USE_LM,
-        ).speech_to_text()
-    )
+
+    Transcribe(
+        model_type=configuration.MODEL,
+        vad=configuration.USE_VAD,
+        wav_path=configuration.WAV_PATH,
+        lm=configuration.USE_LM,
+    ).speech_to_text()
