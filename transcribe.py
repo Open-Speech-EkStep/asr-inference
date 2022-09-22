@@ -1,3 +1,4 @@
+from pyexpat import model
 import configuration
 from hf.infer import Wav2vecHF
 from fseq.infer import load_model_and_generator, get_results
@@ -11,6 +12,7 @@ import torch
 from model_item import ModelItem
 from fseq.infer import Wav2VecCtc
 from glob import glob
+from conformer.infer import Conformer
 
 install()
 console = Console()
@@ -38,6 +40,10 @@ class Transcribe:
             console.log(f"Model loaded from {configuration.HF_MODEL_PATH}")
             self.model = self.hf_model(configuration.HF_MODEL_PATH)
 
+        if self.model_type == "conformer":
+            console.log(f"Model loaded from {configuration.CONFORMER_PATH}")
+            self.model = self.conformer_model(configuration.CONFORMER_PATH)
+
         if self.model_type == "fairseq":
             model_item = ModelItem(
                 configuration.FAIRSEQ_MODEL_PATH, configuration.FAIRSEQ_CHECKPOINT_NAME
@@ -63,8 +69,20 @@ class Transcribe:
 
         return asr_model
 
+    def conformer_model(self, model_path):
+
+        if self.lm:
+            return Conformer(model_path, "kenlm")
+        else:
+            return Conformer(model_path, "viterbi")
+
     def speech_to_text(self, wav_path, hot_words=[]):
         text = ""
+
+        if self.model_type == "conformer":
+            text = self.model.transcribe(wav_path)
+
+
         if self.model_type == "hf":
             if self.vad:
 
@@ -107,9 +125,11 @@ if __name__ == "__main__":
         lm=configuration.USE_LM,
     )
 
-    wav_files = glob("/home/anirudhgupta/hindi_data/yourquote_hf/*/clean/*.wav")
+    #wav_files = glob("/home/anirudhgupta/hindi_data/yourquote_hf/*/clean/*.wav")
+    wav_files = ['/home/anirudhgupta/test_hindi.wav']
 
     for wav in tqdm(wav_files):
         text = m.speech_to_text(wav)
-        with open(wav.replace(".wav", ".txt"), "w+") as f:
-            f.write(text)
+        print(text)
+        #with open(wav.replace(".wav", ".txt"), "w+") as f:
+        #    f.write(text)
