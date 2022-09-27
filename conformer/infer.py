@@ -1,3 +1,4 @@
+
 from nemo.utils import model_utils
 from nemo.collections.asr.models import ASRModel
 from nemo.collections.asr.models.ctc_models import EncDecCTCModel
@@ -19,8 +20,7 @@ class Conformer:
         self.lm = lm
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = self.load_model()
-        if self.lm == 'kenlm':
-            self.decoder = self.build_decoder()
+        self.decoder = self.build_decoder()
 
     def load_model(self):
         model = glob(self.model_path + '/*.nemo')[0]
@@ -31,23 +31,23 @@ class Conformer:
         return asr_model
 
     def build_decoder(self):
-        lm_path = glob(self.model_path + '/*.binary')[0]
-        unigram_path = glob(self.model_path + '/*.txt')[0]
-        with open(unigram_path, encoding='utf-8') as f:
-            unigram_list = [t for t in f.read().strip().split('\n')]
-        decoder = build_ctcdecoder(self.model.decoder.vocabulary, lm_path, unigram_list)
+        if self.lm == "viterbi":
+            decoder = build_ctcdecoder(self.model.decoder.vocabulary)
+        else:
+            lm_path = glob(self.model_path + '/*.binary')[0]
+            unigram_path = glob(self.model_path + '/*.txt')[0]
+            with open(unigram_path, encoding='utf-8') as f:
+                unigram_list = [t for t in f.read().strip().split('\n')]
+            decoder = build_ctcdecoder(self.model.decoder.vocabulary, lm_path, unigram_list)
         return decoder
         
 
     def transcribe(self, wav_path):
-        if self.lm == 'viterbi':
-            return self.model.transcribe([wav_path])[0]
-        else:
-            logits = self.model.transcribe([wav_path], logprobs=True)[0]
-            return self.decoder.decode(logits)
+        logits = self.model.transcribe([wav_path], logprobs=True)[0]
+        return self.decoder.decode(logits)
     
 
 if __name__ == '__main__':
 
-    m = Conformer('/home/anirudhgupta/asr-inference/models/conformer/hindi','kenlm').transcribe('/home/anirudhgupta/test_hindi.wav')
+    m = Conformer('/home/anirudhgupta/asr-inference/models/conformer/hindi','viterbi').transcribe('/home/anirudhgupta/test_hindi.wav')
     print(m)

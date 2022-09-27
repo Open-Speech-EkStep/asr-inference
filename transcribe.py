@@ -26,8 +26,8 @@ class Transcribe:
         self.model_items = {}
 
         if torch.cuda.is_available():
-            self.cuda = True
-            self.half = True
+            self.cuda = False
+            self.half = False
         else:
             self.cuda = False
             self.half = False
